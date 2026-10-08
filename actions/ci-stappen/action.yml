@@ -1,0 +1,48 @@
+name: CI-stappen
+description: Installeren en de controles van de app draaien (typecheck, lint, test, build) met de bestaande scripts van de app.
+inputs:
+  node-version: { default: "20" }
+  working-directory: { default: "." }
+  install-command: { default: "npm ci" }
+  typecheck-command: { default: "" }
+  lint-command: { default: "" }
+  test-command: { default: "" }
+  build-command: { default: "" }
+  modus: { description: "snel of uitgebreid (uitgebreid draait ook build-command)", default: "snel" }
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+    - name: Installeren
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env: { CMD: "${{ inputs.install-command }}" }
+      run: bash -c "$CMD"
+    - name: Typecheck
+      if: inputs.typecheck-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env: { CMD: "${{ inputs.typecheck-command }}" }
+      run: bash -c "$CMD"
+    - name: Lint
+      if: inputs.lint-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env: { CMD: "${{ inputs.lint-command }}" }
+      run: bash -c "$CMD"
+    - name: Tests
+      if: inputs.test-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env: { CMD: "${{ inputs.test-command }}" }
+      run: bash -c "$CMD"
+    - name: Build
+      if: inputs.modus == 'uitgebreid' && inputs.build-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env: { CMD: "${{ inputs.build-command }}" }
+      run: bash -c "$CMD"

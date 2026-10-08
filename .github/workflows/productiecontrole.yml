@@ -1,0 +1,31 @@
+# Kleine controle op de branch production (PLAT-281): is precies deze commit eerder als kandidaat
+# gevalideerd? Zo ja, dan is deze run groen (en laat Railway Wait for CI de deploy door) zonder
+# de zware controles opnieuw te draaien. Zo nee, dan faalt hij en deployt Railway niet.
+name: productiecontrole
+on:
+  workflow_call:
+    inputs:
+      hotfix: { type: boolean, default: false, description: "true = geen kandidaat vereist (een hotfix draait zelf de snelle ci.yml)" }
+
+permissions:
+  contents: read
+  statuses: read
+
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Is deze commit als kandidaat gevalideerd?
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HOTFIX: ${{ inputs.hotfix }}
+        run: |
+          if [ "$HOTFIX" = "true" ]; then echo "Hotfix: kandidaat niet vereist." >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          beschrijving=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/statuses" \
+            --jq '[.[] | select(.context=="goodapp-ci/gevalideerd" and .state=="success")][0].description // empty')
+          if [ -z "$beschrijving" ]; then
+            echo "::error::Commit ${GITHUB_SHA::7} is niet als kandidaat gevalideerd. Promoveer alleen een gevalideerde kandidaat."
+            exit 1
+          fi
+          echo "Commit ${GITHUB_SHA::7}: ${beschrijving}" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,9 @@
+{
+  "name": "goodapp-ci",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Herbruikbare GitHub Actions voor GoodApp: kandidaatvalidatie, productiecontrole en migratiescan.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}

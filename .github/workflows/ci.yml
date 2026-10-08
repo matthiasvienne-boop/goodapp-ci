@@ -1,0 +1,97 @@
+# Herbruikbare kandidaatvalidatie (PLAT-281). Aanroepen vanuit een app met:
+#   uses: matthiasvienne-boop/goodapp-ci/.github/workflows/ci.yml@<tag of sha>
+# De scripts van de app komen uit de aanroeper; hier staat geen app-specifieke logica en geen geheim.
+name: kandidaat
+on:
+  workflow_call:
+    inputs:
+      node-version: { type: string, default: "20" }
+      working-directory: { type: string, default: "." }
+      install-command: { type: string, default: "npm ci" }
+      typecheck-command: { type: string, default: "" }
+      lint-command: { type: string, default: "" }
+      test-command: { type: string, default: "" }
+      build-command: { type: string, default: "" }
+      modus: { type: string, default: "uitgebreid", description: "snel (hotfix) of uitgebreid (release)" }
+      postgres: { type: boolean, default: false, description: "Postgres-servicecontainer voor databasetests" }
+      migratiescan: { type: boolean, default: true }
+      basis-ref: { type: string, default: "origin/production" }
+      markeer-gevalideerd: { type: boolean, default: true }
+    outputs:
+      risico:
+        value: ${{ jobs.zonder-db.outputs.risico || jobs.met-postgres.outputs.risico }}
+
+permissions:
+  contents: read
+
+jobs:
+  zonder-db:
+    if: ${{ !inputs.postgres }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: { contents: read, statuses: write }
+    outputs:
+      risico: ${{ steps.scan.outputs.risico }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with: { fetch-depth: 0 }
+      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@main
+        with:
+          node-version: ${{ inputs.node-version }}
+          working-directory: ${{ inputs.working-directory }}
+          install-command: ${{ inputs.install-command }}
+          typecheck-command: ${{ inputs.typecheck-command }}
+          lint-command: ${{ inputs.lint-command }}
+          test-command: ${{ inputs.test-command }}
+          build-command: ${{ inputs.build-command }}
+          modus: ${{ inputs.modus }}
+      - id: scan
+        if: ${{ inputs.migratiescan }}
+        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@main
+        with: { basis-ref: "${{ inputs.basis-ref }}" }
+      - if: ${{ inputs.markeer-gevalideerd }}
+        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@main
+        with:
+          token: ${{ github.token }}
+          risico: ${{ steps.scan.outputs.risico || 'niet-gescand' }}
+
+  met-postgres:
+    if: ${{ inputs.postgres }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions: { contents: read, statuses: write }
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Alleen een wegwerpdatabank in de run zelf; de naam bevat 'test' voor de guards van de apps.
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+    outputs:
+      risico: ${{ steps.scan.outputs.risico }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with: { fetch-depth: 0 }
+      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@main
+        with:
+          node-version: ${{ inputs.node-version }}
+          working-directory: ${{ inputs.working-directory }}
+          install-command: ${{ inputs.install-command }}
+          typecheck-command: ${{ inputs.typecheck-command }}
+          lint-command: ${{ inputs.lint-command }}
+          test-command: ${{ inputs.test-command }}
+          build-command: ${{ inputs.build-command }}
+          modus: ${{ inputs.modus }}
+      - id: scan
+        if: ${{ inputs.migratiescan }}
+        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@main
+        with: { basis-ref: "${{ inputs.basis-ref }}" }
+      - if: ${{ inputs.markeer-gevalideerd }}
+        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@main
+        with:
+          token: ${{ github.token }}
+          risico: ${{ steps.scan.outputs.risico || 'niet-gescand' }}

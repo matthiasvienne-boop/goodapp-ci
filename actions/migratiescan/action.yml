@@ -1,0 +1,29 @@
+name: Migratiescan
+description: Labelt de migraties die tussen een basis en HEAD zijn toegevoegd (geen-migratie, veilig, let-op, risicovol).
+inputs:
+  basis-ref:
+    description: Referentie waarmee vergeleken wordt, standaard de huidige productiebranch.
+    default: origin/production
+  migratie-paden:
+    description: Git-pathspecs, één per regel.
+    default: |
+      :(glob)**/migrations/**
+      :(glob)**/migrations.ts
+      :(glob)**/*.sql
+  faal-bij-risico:
+    description: "true = de stap faalt bij het label risicovol."
+    default: "false"
+outputs:
+  risico:
+    description: Het label.
+    value: ${{ steps.scan.outputs.risico }}
+runs:
+  using: composite
+  steps:
+    - id: scan
+      shell: bash
+      env:
+        BASIS_REF: ${{ inputs.basis-ref }}
+        MIGRATIE_PADEN: ${{ inputs.migratie-paden }}
+        FAAL_BIJ_RISICO: ${{ inputs.faal-bij-risico }}
+      run: node "${{ github.action_path }}/scan.mjs"
