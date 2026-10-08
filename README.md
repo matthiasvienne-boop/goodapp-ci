@@ -3,8 +3,8 @@
 Herbruikbare GitHub Actions voor de GoodApp-producten (PLAT-281). Publiek, zonder geheimen:
 alles wat hier staat is bruikbaar voor wie de repository leest, en de aanroeper levert zijn eigen scripts.
 
-**Status: proef.** De werkwijze is nog niet in werking voor de productrepo's. De acties verwijzen nu naar `@main`;
-vóór een echte uitrol worden alle verwijzingen vastgepind op een tag of commit-SHA.
+**Status: proef.** De werkwijze is nog niet in werking voor de productrepo's. Aanroepers pinnen op een volledige commit-SHA van deze repo, nooit op `@main`.
+`ci.yml` verwijst zelf naar de acties op een vaste SHA (zie dat bestand).
 
 ## Wat erin zit
 
@@ -33,7 +33,7 @@ permissions:
 jobs:
   kandidaat:
     permissions: { contents: read, statuses: write }
-    uses: matthiasvienne-boop/goodapp-ci/.github/workflows/ci.yml@main
+    uses: matthiasvienne-boop/goodapp-ci/.github/workflows/ci.yml@<volledige-commit-sha>
     with:
       typecheck-command: npm run typecheck
       test-command: npm test
@@ -52,7 +52,7 @@ permissions:
   statuses: read
 jobs:
   controle:
-    uses: matthiasvienne-boop/goodapp-ci/.github/workflows/productiecontrole.yml@main
+    uses: matthiasvienne-boop/goodapp-ci/.github/workflows/productiecontrole.yml@<volledige-commit-sha>
 ```
 
 Zo draait de zware controle **één keer per release** (op `candidate/*`), en is de run op `production` een controle van een halve minuut.
