@@ -14,6 +14,7 @@ on:
       build-command: { type: string, default: "" }
       modus: { type: string, default: "uitgebreid", description: "snel (hotfix) of uitgebreid (release)" }
       postgres: { type: boolean, default: false, description: "Postgres-servicecontainer voor databasetests" }
+      database-naam: { type: string, default: "test", description: "Naam van de wegwerpdatabank in de container; sommige apps eisen een bepaalde naam in hun guard" }
       migratiescan: { type: boolean, default: true }
       basis-ref: { type: string, default: "origin/production" }
       markeer-gevalideerd: { type: boolean, default: true }
@@ -63,14 +64,16 @@ jobs:
     services:
       postgres:
         image: postgres:16
-        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: test }
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ${{ inputs.database-naam }}
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      # Alleen een wegwerpdatabank in de run zelf; de naam bevat 'test' voor de guards van de apps.
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
-      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+      # Alleen een wegwerpdatabank in de run zelf; de naam is instelbaar voor de guards van de apps (standaard 'test').
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ inputs.database-naam }}
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ inputs.database-naam }}
     outputs:
       risico: ${{ steps.scan.outputs.risico }}
     steps:
