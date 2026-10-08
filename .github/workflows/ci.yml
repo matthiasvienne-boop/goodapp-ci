@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with: { fetch-depth: 0 }
-      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@main
+      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
         with:
           node-version: ${{ inputs.node-version }}
           working-directory: ${{ inputs.working-directory }}
@@ -47,10 +47,10 @@ jobs:
           modus: ${{ inputs.modus }}
       - id: scan
         if: ${{ inputs.migratiescan }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@main
+        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
         with: { basis-ref: "${{ inputs.basis-ref }}" }
       - if: ${{ inputs.markeer-gevalideerd }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@main
+        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
         with:
           token: ${{ github.token }}
           risico: ${{ steps.scan.outputs.risico || 'niet-gescand' }}
@@ -76,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with: { fetch-depth: 0 }
-      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@main
+      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
         with:
           node-version: ${{ inputs.node-version }}
           working-directory: ${{ inputs.working-directory }}
@@ -88,10 +88,10 @@ jobs:
           modus: ${{ inputs.modus }}
       - id: scan
         if: ${{ inputs.migratiescan }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@main
+        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
         with: { basis-ref: "${{ inputs.basis-ref }}" }
       - if: ${{ inputs.markeer-gevalideerd }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@main
+        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
         with:
           token: ${{ github.token }}
           risico: ${{ steps.scan.outputs.risico || 'niet-gescand' }}
