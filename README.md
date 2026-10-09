@@ -15,6 +15,7 @@ alles wat hier staat is bruikbaar voor wie de repository leest, en de aanroeper 
 | `actions/migratiescan` | Labelt toegevoegde migratieregels: `geen-migratie`, `veilig`, `let-op`, `risicovol`. Een tekstscan op regels, geen SQL-parser: hij vervangt de menselijke goedkeuring niet. |
 | `actions/alleen-docs` | Raakt de release alleen documentatie (`*.md`, `docs/`)? Dan draait `ci.yml` de zware stappen niet, maar markeert de commit wel als gevalideerd (modus `alleen-documentatie`). Bij twijfel of zonder basis: zwaar valideren. |
 | `scripts/release.mjs` | Promoveert een gevalideerde kandidaat naar `production`. Weigert vóór het pushen; pusht alleen met `--ga`. Zie hieronder. |
+| `scripts/valideer.mjs` | Valideert één volledige commit-SHA: bestaat hij, migratierisico ten opzichte van de basis, gewijzigde testbestanden en toegevoegde skip-/only-markers. Schrijft JSON (`goodapp-ci/validatie@1`) voor Founder OS. Pusht niets en zet geen status. |
 | `actions/ci-stappen`, `actions/markeer` | Bouwstenen voor `ci.yml`. `ci-stappen` kent ook `migratie-command` (draait na de installatie, vóór de controles). |
 
 ## Hoe een app het gebruikt
