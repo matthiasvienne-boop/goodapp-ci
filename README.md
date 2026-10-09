@@ -13,7 +13,9 @@ alles wat hier staat is bruikbaar voor wie de repository leest, en de aanroeper 
 | `.github/workflows/ci.yml` | Kandidaatvalidatie: installeren, typecheck, lint, tests, build en migratiescan. Zet bij succes de status `goodapp-ci/gevalideerd` op de commit. |
 | `.github/workflows/productiecontrole.yml` | Kleine controle op de branch `production`: is precies deze commit als kandidaat gevalideerd? Zo niet: rood, zodat Railway Wait for CI de deploy tegenhoudt. |
 | `actions/migratiescan` | Labelt toegevoegde migratieregels: `geen-migratie`, `veilig`, `let-op`, `risicovol`. Een tekstscan op regels, geen SQL-parser: hij vervangt de menselijke goedkeuring niet. |
-| `actions/ci-stappen`, `actions/markeer` | Bouwstenen voor `ci.yml`. |
+| `actions/alleen-docs` | Raakt de release alleen documentatie (`*.md`, `docs/`)? Dan draait `ci.yml` de zware stappen niet, maar markeert de commit wel als gevalideerd (modus `alleen-documentatie`). Bij twijfel of zonder basis: zwaar valideren. |
+| `scripts/release.mjs` | Promoveert een gevalideerde kandidaat naar `production`. Weigert vóór het pushen; pusht alleen met `--ga`. Zie hieronder. |
+| `actions/ci-stappen`, `actions/markeer` | Bouwstenen voor `ci.yml`. `ci-stappen` kent ook `migratie-command` (draait na de installatie, vóór de controles). |
 
 ## Hoe een app het gebruikt
 
@@ -57,6 +59,26 @@ jobs:
 
 Zo draait de zware controle **één keer per release** (op `candidate/*`), en is de run op `production` een controle van een halve minuut.
 Pushes naar `main` en featurebranches starten niets.
+
+## Voor de aanroeper: nooit een filter op de productiecontrole
+
+`productie.yml` (de aanroep van `productiecontrole.yml`) mag **geen** `paths`, `paths-ignore` of ander filter hebben. Bewezen in de proef (PLAT-283):
+draait er voor een push naar `production` geen workflow, dan rolt Railway Wait for CI de commit na ongeveer 45 seconden **ongecontroleerd uit**, ook
+de niet-gevalideerde commits die eronder staan. De controle duurt een halve minuut; filteren hoort binnen de zware kandidaatrun te gebeuren
+(`alleen-docs`), niet door de controle over te slaan.
+
+## Releasescript
+
+```
+node scripts/release.mjs                 # droogloop: toont wat er zou gebeuren
+node scripts/release.mjs --ga            # pusht de gevalideerde kandidaat naar production
+node scripts/release.mjs --akkoord-risicovol --back-up-gecontroleerd --ga   # bij migratielabel risicovol
+node scripts/release.mjs --hotfix --ga   # alleen met een (snelle) gevalideerde commit
+```
+
+Het script weigert als de commit niet als kandidaat gevalideerd is, als de validatie alleen "snel" was zonder `--hotfix`, als de commit geen
+fast-forward van `production` is, of als de migraties `risicovol` zijn zonder beide bevestigingen. Het forceert nooit. De reden voor de
+volgorde: de branch `production` beweegt ook als de controle daarna faalt; de slechte commit blijft er dan op staan terwijl Railway de deploy overslaat.
 
 ## Uitgangspunten
 
