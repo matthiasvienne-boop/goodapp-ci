@@ -3,6 +3,7 @@ description: Zet de status goodapp-ci/gevalideerd op de gecontroleerde commit, m
 inputs:
   token: { description: "GITHUB_TOKEN met statuses: write", required: true }
   risico: { description: "Label van de migratiescan", default: "geen-basis" }
+  modus: { description: "uitgebreid, snel of alleen-documentatie", default: "uitgebreid" }
 runs:
   using: composite
   steps:
@@ -10,8 +11,9 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.token }}
         RISICO: ${{ inputs.risico }}
+        MODUS: ${{ inputs.modus }}
       run: |
         gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
           -f state=success -f context=goodapp-ci/gevalideerd \
-          -f description="gevalideerd, migraties: ${RISICO}" >/dev/null
-        echo "Commit ${GITHUB_SHA::7} gemarkeerd als gevalideerd (migraties: ${RISICO})" >> "$GITHUB_STEP_SUMMARY"
+          -f description="gevalideerd (${MODUS}), migraties: ${RISICO}" >/dev/null
+        echo "Commit ${GITHUB_SHA::7} gemarkeerd als gevalideerd (${MODUS}, migraties: ${RISICO})" >> "$GITHUB_STEP_SUMMARY"

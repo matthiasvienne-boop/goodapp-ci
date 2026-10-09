@@ -12,6 +12,8 @@ on:
       lint-command: { type: string, default: "" }
       test-command: { type: string, default: "" }
       build-command: { type: string, default: "" }
+      migratie-command: { type: string, default: "", description: "Draait na de installatie en vóór de controles, bv. alle migraties op de lege wegwerpdatabank" }
+      docs-patronen: { type: string, default: "*.md docs/", description: "Wijzigingen die alleen hieruit bestaan, gelden als documentatierelease (snelle modus)" }
       modus: { type: string, default: "uitgebreid", description: "snel (hotfix) of uitgebreid (release)" }
       postgres: { type: boolean, default: false, description: "Postgres-servicecontainer voor databasetests" }
       database-naam: { type: string, default: "test", description: "Naam van de wegwerpdatabank in de container; sommige apps eisen een bepaalde naam in hun guard" }
@@ -36,7 +38,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with: { fetch-depth: 0 }
-      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
+      - id: docs
+        uses: matthiasvienne-boop/goodapp-ci/actions/alleen-docs@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
+        with:
+          basis-ref: ${{ inputs.basis-ref }}
+          docs-patronen: ${{ inputs.docs-patronen }}
+      - if: ${{ steps.docs.outputs.alleen-docs != 'true' }}
+        uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
         with:
           node-version: ${{ inputs.node-version }}
           working-directory: ${{ inputs.working-directory }}
@@ -45,16 +53,18 @@ jobs:
           lint-command: ${{ inputs.lint-command }}
           test-command: ${{ inputs.test-command }}
           build-command: ${{ inputs.build-command }}
+          migratie-command: ${{ inputs.migratie-command }}
           modus: ${{ inputs.modus }}
       - id: scan
         if: ${{ inputs.migratiescan }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
+        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
         with: { basis-ref: "${{ inputs.basis-ref }}" }
       - if: ${{ inputs.markeer-gevalideerd }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
+        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
         with:
           token: ${{ github.token }}
           risico: ${{ steps.scan.outputs.risico || 'niet-gescand' }}
+          modus: ${{ steps.docs.outputs.alleen-docs == 'true' && 'alleen-documentatie' || inputs.modus }}
 
   met-postgres:
     if: ${{ inputs.postgres }}
@@ -79,7 +89,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with: { fetch-depth: 0 }
-      - uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
+      - id: docs
+        uses: matthiasvienne-boop/goodapp-ci/actions/alleen-docs@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
+        with:
+          basis-ref: ${{ inputs.basis-ref }}
+          docs-patronen: ${{ inputs.docs-patronen }}
+      - if: ${{ steps.docs.outputs.alleen-docs != 'true' }}
+        uses: matthiasvienne-boop/goodapp-ci/actions/ci-stappen@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
         with:
           node-version: ${{ inputs.node-version }}
           working-directory: ${{ inputs.working-directory }}
@@ -88,13 +104,15 @@ jobs:
           lint-command: ${{ inputs.lint-command }}
           test-command: ${{ inputs.test-command }}
           build-command: ${{ inputs.build-command }}
+          migratie-command: ${{ inputs.migratie-command }}
           modus: ${{ inputs.modus }}
       - id: scan
         if: ${{ inputs.migratiescan }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
+        uses: matthiasvienne-boop/goodapp-ci/actions/migratiescan@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
         with: { basis-ref: "${{ inputs.basis-ref }}" }
       - if: ${{ inputs.markeer-gevalideerd }}
-        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@7caec502c4ca6cfef3d653e67f99b58bd5bbd402
+        uses: matthiasvienne-boop/goodapp-ci/actions/markeer@b1d72a1e2759a046f8ebbd69146f3f08919ac7ff
         with:
           token: ${{ github.token }}
           risico: ${{ steps.scan.outputs.risico || 'niet-gescand' }}
+          modus: ${{ steps.docs.outputs.alleen-docs == 'true' && 'alleen-documentatie' || inputs.modus }}
