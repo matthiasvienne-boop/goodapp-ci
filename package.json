@@ -5,5 +5,5 @@
   "description": "Herbruikbare GitHub Actions voor GoodApp: kandidaatvalidatie, productiecontrole en migratiescan.",
   "license": "MIT",
   "type": "module",
-  "scripts": { "test": "node --test test/*.test.mjs" }
+  "scripts": { "test": "node --test test/*.test.mjs probe/probe.test.mjs" }
 }

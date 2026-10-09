@@ -1,0 +1,12 @@
+{
+  "name": "goodapp-probe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimale testapp voor de releaseproef (PLAT-281 fase 2B). Geen dependencies, geen database.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test probe.test.mjs"
+  }
+}
