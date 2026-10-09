@@ -1,0 +1,18 @@
+name: Alleen documentatie?
+description: Bepaalt of de wijzigingen tussen de basis en HEAD uitsluitend documentatie zijn (dan kunnen de zware stappen worden overgeslagen).
+inputs:
+  basis-ref: { description: "Referentie om mee te vergelijken", default: origin/production }
+  docs-patronen: { description: "Spatiegescheiden: '*.ext' voor een extensie, 'map/' voor een map in de wortel", default: "*.md docs/" }
+outputs:
+  alleen-docs:
+    description: '"true" of "false"'
+    value: ${{ steps.check.outputs.alleen-docs }}
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      env:
+        BASIS_REF: ${{ inputs.basis-ref }}
+        DOCS_PATRONEN: ${{ inputs.docs-patronen }}
+      run: node "${{ github.action_path }}/check.mjs"

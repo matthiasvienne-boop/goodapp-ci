@@ -8,6 +8,7 @@ inputs:
   lint-command: { default: "" }
   test-command: { default: "" }
   build-command: { default: "" }
+  migratie-command: { description: "draait na de installatie en vóór de controles, bijvoorbeeld alle migraties op de lege wegwerpdatabank", default: "" }
   modus: { description: "snel of uitgebreid (uitgebreid draait ook build-command)", default: "snel" }
 runs:
   using: composite
@@ -21,6 +22,12 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env: { CMD: "${{ inputs.install-command }}" }
+      run: bash -c "$CMD"
+    - name: Migraties vanaf nul
+      if: inputs.migratie-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env: { CMD: "${{ inputs.migratie-command }}" }
       run: bash -c "$CMD"
     - name: Typecheck
       if: inputs.typecheck-command != ''
